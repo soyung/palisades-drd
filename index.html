@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palisades Recovery — What Could a DRD Fund?</title>
+<style>
+  :root {
+    --bg: #f7f6f3; --surface: #ffffff; --surface2: #f1f0ed;
+    --border: #e2e0db; --border-active: #c5c2bc;
+    --muted: #6b7280; --faint: #9ca3af;
+    --text: #111827; --text-body: #374151;
+    --blue: #3b5998; --terra: #c2665a; --green: #3d7c5f;
+    --tag-build: #3E5F7D; --tag-ongoing: #7A6A86;
+    --sidebar-w: 220px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Top Bar ── */
+  .top-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+  }
+  .top-inner { max-width: 1100px; margin: 0 auto; }
+  .top-row1 { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .top-sup {
+    font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted);
+  }
+  .top-title { font-size: 1.05rem; font-weight: 800; line-height: 1.2; }
+  .top-search {
+    margin-left: auto; width: 200px; padding: 5px 10px;
+    border: 1px solid var(--border); border-radius: 6px;
+    font-size: 0.75rem; font-family: inherit;
+    background: var(--surface2); outline: none;
+  }
+  .top-search:focus { border-color: var(--border-active); width: 280px; transition: width 0.2s; }
+
+  /* Progress bar */
+  .progress-row { display: flex; align-items: center; gap: 8px; }
+  .progress-bar { flex: 1; height: 6px; border-radius: 3px; background: var(--surface2); overflow: hidden; display: flex; }
+  .progress-seg {
+    height: 100%; transition: width 0.3s; cursor: pointer; position: relative;
+  }
+  .progress-seg:hover { opacity: 0.8; }
+  .progress-label { font-size: 0.68rem; color: var(--muted); white-space: nowrap; font-weight: 600; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    position: fixed; top: 68px; left: 0; bottom: 0;
+    width: var(--sidebar-w); background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto; padding: 12px 0; z-index: 100;
+  }
+  .side-group-label {
+    font-size: 0.62rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.08em; padding: 10px 14px 4px; color: var(--muted);
+  }
+  .side-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px; cursor: pointer; border: none; background: none;
+    width: 100%; text-align: left; font-family: inherit;
+    font-size: 0.78rem; color: var(--text-body);
+    border-left: 3px solid transparent; transition: all 0.12s;
+  }
+  .side-item:hover { background: var(--surface2); }
+  .side-item.active { background: var(--surface2); font-weight: 700; color: var(--text); }
+  .side-item .s-icon { font-size: 0.95rem; flex-shrink: 0; }
+  .side-item .s-id {
+    font-size: 0.62rem; font-weight: 800; font-family: monospace;
+    flex-shrink: 0; width: 14px;
+  }
+  .side-item .s-label { flex: 1; line-height: 1.3; }
+  .side-item .s-count {
+    font-size: 0.62rem; color: var(--faint); flex-shrink: 0;
+  }
+  .side-item .s-check {
+    font-size: 0.7rem; flex-shrink: 0; color: var(--faint);
+  }
+
+  /* ── Legend sidebar section ── */
+  .side-legend {
+    padding: 12px 14px; border-top: 1px solid var(--border); margin-top: 8px;
+  }
+  .side-legend-title {
+    font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--muted); margin-bottom: 6px;
+  }
+  .side-legend-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 0.7rem; }
+  .side-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── Main Content ── */
+  .main {
+    margin-left: var(--sidebar-w); margin-top: 68px;
+    padding: 24px 28px 60px; max-width: 800px;
+  }
+
+  /* Category page */
+  .cat-page { display: none; }
+  .cat-page.active { display: block; }
+
+  .cat-header { margin-bottom: 20px; }
+  .cat-header-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .cat-header .icon { font-size: 1.5rem; }
+  .cat-header .cid { font-size: 0.8rem; font-weight: 800; font-family: monospace; }
+  .cat-header .ctitle { font-size: 1.3rem; font-weight: 800; }
+  .cat-header .csub { font-size: 0.88rem; color: var(--muted); line-height: 1.4; margin-top: 2px; }
+  .cat-sources { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .cat-source {
+    font-size: 0.66rem; padding: 2px 6px; border-radius: 3px;
+    background: var(--surface2); color: var(--muted); font-weight: 500;
+  }
+
+  /* Navigation buttons */
+  .nav-btns {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--border);
+  }
+  .nav-btn {
+    padding: 8px 20px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text); font-size: 0.82rem;
+    font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s;
+  }
+  .nav-btn:hover { border-color: var(--border-active); background: var(--surface2); }
+  .nav-btn.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .nav-btn.primary:hover { opacity: 0.9; }
+  .nav-btn:disabled { opacity: 0.3; cursor: default; }
+  .nav-page-info { font-size: 0.75rem; color: var(--muted); }
+
+  /* ── Subgroup ── */
+  .subgroup-label {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted);
+    padding: 12px 0 4px; border-bottom: 1px solid var(--border); margin-bottom: 8px;
+  }
+
+  /* ── Item Card (always expanded) ── */
+  .item-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; margin-bottom: 10px; overflow: visible;
+    border-color: var(--border-active); box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  }
+  .item-header {
+    padding: 14px 16px 0;
+  }
+  .item-name { font-weight: 600; font-size: 0.9rem; color: var(--text); line-height: 1.35; }
+  .item-meta { margin-top: 5px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  .item-cost-val { font-weight: 600; font-family: monospace; color: var(--text); font-size: 0.78rem; }
+  .item-cost-src { color: var(--faint); font-style: italic; font-size: 0.7rem; margin-left: 6px; }
+  .item-no-est { font-size: 0.72rem; color: var(--faint); font-style: italic; }
+
+  .lifecycle-tags { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+  .lc-tag {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 0.65rem; font-weight: 600; padding: 2px 7px;
+    border-radius: 10px; letter-spacing: 0.02em;
+  }
+  .lc-build { background: rgba(62,95,125,0.08); color: var(--tag-build); border: 1px solid rgba(62,95,125,0.2); }
+  .lc-ongoing { background: rgba(122,106,134,0.08); color: var(--tag-ongoing); border: 1px solid rgba(122,106,134,0.2); }
+
+  .legal-tag { white-space: nowrap;
+    display: inline-block; font-size: 0.68rem; font-weight: 600;
+    font-family: monospace; padding: 2px 6px; border-radius: 3px;
+    cursor: help; margin-right: 3px;
+  }
+  .legal-f1 { background: #64748b12; color: #64748b; border: 1px solid #64748b25; }
+  .legal-f2 { background: #a8856c12; color: #a8856c; border: 1px solid #a8856c25; }
+  .legal-f3 { background: #78866b12; color: #78866b; border: 1px solid #78866b25; }
+
+  /* Item detail */
+  .item-detail {
+    padding: 0 16px 16px; font-size: 0.83rem; line-height: 1.55;
+    color: var(--text-body); border-top: 1px solid var(--border);
+    margin-top: -1px; padding-top: 14px;
+  }
+  .detail-grid { display: grid; gap: 10px; }
+  .detail-label {
+    font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em; margin-bottom: 2px;
+  }
+  .detail-value { font-size: 0.82rem; }
+  .detail-muted { color: var(--muted); font-style: italic; }
+
+  /* ── Glossary Tooltip ── */
+  .g-term {
+    text-decoration: underline; text-decoration-style: dotted;
+    text-decoration-color: var(--faint); text-underline-offset: 2px;
+    cursor: help; position: relative; color: inherit;
+  }
+  .g-term:hover { text-decoration-color: var(--blue); }
+  .g-bubble {
+    display: none; position: fixed;
+    background: var(--text); color: #fff;
+    font-size: 0.72rem; font-weight: 400; font-style: normal;
+    line-height: 1.4; padding: 6px 10px; border-radius: 6px;
+    max-width: 320px; white-space: normal; z-index: 9999;
+    pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .g-term:hover .g-bubble { display: block; }
+
+  /* ── Intro / Glossary / Footer pages ── */
+  .intro-section { max-width: 600px; }
+  .intro-section h2 { font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; }
+  .intro-section p { font-size: 0.85rem; color: var(--text-body); line-height: 1.55; margin-bottom: 12px; }
+
+  .legal-legend { margin-top: 16px; }
+  .legal-legend-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 4px; font-size: 0.82rem; }
+
+  .glossary-grid { display: grid; grid-template-columns: 1fr; gap: 3px; }
+  .glossary-row {
+    display: flex; gap: 8px; font-size: 0.76rem; line-height: 1.4;
+    padding: 3px 0; border-bottom: 1px solid rgba(226,224,219,0.13);
+  }
+  .glossary-term {
+    font-weight: 700; color: var(--text); min-width: 80px;
+    flex-shrink: 0; font-family: monospace; font-size: 0.72rem;
+  }
+  .glossary-def { color: var(--muted); }
+
+  .footer-section { font-size: 0.78rem; color: var(--muted); line-height: 1.55; }
+  .footer-section div { margin-bottom: 2px; }
+  .footer-note { margin-top: 10px; font-style: italic; font-size: 0.72rem; }
+
+  /* ── Hamburger Button ── */
+  .hamburger {
+    display: none; background: none; border: none; cursor: pointer;
+    font-size: 1.3rem; padding: 4px 8px; color: var(--text);
+    flex-shrink: 0; line-height: 1;
+  }
+
+  /* ── Side Tab (mobile pull tab) ── */
+  .side-tab {
+    display: none; position: fixed; left: 0; top: 50%;
+    transform: translateY(-50%);
+    z-index: 151; cursor: pointer;
+    background: #e5e7eb; color: #6b7280;
+    border-radius: 0 4px 4px 0;
+    padding: 8px 3px; font-size: 0.7rem;
+    font-weight: 600; line-height: 1;
+    box-shadow: 1px 0 4px rgba(0,0,0,0.08);
+    opacity: 0.6; transition: opacity 0.2s;
+  }
+  .side-tab:hover { opacity: 1; }
+  @media (max-width: 768px) { .side-tab { display: flex; align-items: center; justify-content: center; } }
+
+  /* ── Sidebar Overlay (mobile) ── */
+  .sidebar-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3);
+    z-index: 149;
+  }
+  .sidebar-overlay.vis { display: block; }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    :root { --sidebar-w: 0px; }
+    .hamburger { display: block; }
+    .sidebar {
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+      width: 240px; z-index: 150;
+    }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; margin-top: 68px; padding: 16px 14px 60px; }
+    .top-search { width: 120px; }
+    .top-search:focus { width: 160px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── TOP BAR ── -->
+<div class="top-bar">
+  <div class="top-inner">
+    <div class="top-row1">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div>
+        <div class="top-sup">Palisades Recovery · Deliberative Assembly</div>
+        <div class="top-title">What Could a DRD Fund?</div>
+      </div>
+      <input class="top-search" type="text" id="searchBox" placeholder="Search items…" oninput="onSearch()">
+    </div>
+    <div class="progress-row">
+      <span class="progress-label" id="progressLabel">Intro</span>
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SIDEBAR OVERLAY ── -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- ── SIDEBAR ── -->
+<div class="sidebar" id="sidebar"></div>
+
+<!-- ── SIDE TAB (mobile) ── -->
+<div class="side-tab" id="sideTab" onclick="toggleSidebar()">▶</div>
+
+<!-- ── MAIN ── -->
+<div class="main" id="mainContent"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════════════════════════
+const GROUPS = {
+  infra: { label:"Built Environment", color:"#3b5998", ids:["A","B","C"] },
+  people: { label:"People & Economy", color:"#c2665a", ids:["D","E","F"] },
+  ops: { label:"Operations & Services", color:"#3d7c5f", ids:["G","H","I"] },
+};
+const CAT_SHORT = {
+  A:"Public Facilities", B:"Utilities & Roads", C:"Wildfire Prevention",
+  D:"Homeowner Rebuilding", E:"Local Business Recovery", F:"Displaced Resident Aid",
+  G:"Construction Logistics", H:"Health & Community", I:"District Governance"
+};
+const CATEGORIES = [
+  { id:"A", icon:"🏛️", group:"infra", title:"Public Facilities", subtitle:"Rebuild destroyed public buildings and community spaces", sources:["AECOM IRP Table F.1","Altadena IFP"], items:[
+    { id:"a1", name:"Palisades Branch Library (rebuild)", lead:"LA Public Library", executor:"City contracts general contractor", currentFunding:"FEMA PA (partial); City capital budget", drdRole:"Gap funding — cover difference between FEMA reimbursement and actual rebuild cost", cost:"$33.3M", costSource:"AECOM IRP Table F.1", legal:["f1"], lc:["build","recurring"], precedent:"Altadena IFP includes comparable public facility category" },
+    { id:"a2", name:"Library contents & collections replacement", lead:"LA Public Library", executor:"Library procurement", currentFunding:"FEMA PA (limited for contents)", drdRole:"Full or partial funding — FEMA rarely covers full collection replacement", cost:"$1.4M", costSource:"AECOM IRP Table F.1", legal:["f1"], lc:["build"], precedent:null },
+    { id:"a3", name:"Palisades Recreation Center (rebuild)", lead:"Dept of Recreation & Parks (RAP)", executor:"City contracts general contractor", currentFunding:"FEMA PA (partial); RAP capital budget", drdRole:"Gap funding for rebuild above FEMA reimbursement", cost:"$16.2M", costSource:"AECOM IRP Table F.1", legal:["f1"], lc:["build","recurring"], precedent:"Altadena IFP allocates for park/recreation facility" },
+    { id:"a4", name:"Fire station upgrades & shared first-responder substation", lead:"LAFD / LA County Fire", executor:"City/County joint procurement", currentFunding:"FEMA PA; City/County capital budgets", drdRole:"Fund multi-jurisdictional facility — unlikely without dedicated funding source", cost:null, costSource:"No formal estimate", legal:["f1","f2"], lc:["build","recurring"], precedent:null },
+    { id:"a5", name:"Parks, playgrounds, and open space rebuild", lead:"RAP", executor:"City contracts landscape/construction firms", currentFunding:"FEMA PA (limited); Measure A (RPOSD); Prop K park funds (expiring FY 2026-27)", drdRole:"Supplement park rebuild beyond FEMA scope", cost:null, costSource:"No formal estimate", legal:["f1"], lc:["build","recurring"], precedent:null },
+  ]},
+  { id:"B", icon:"⚡", group:"infra", title:"Utilities & Roads", subtitle:"Repair and upgrade core utility and transportation networks — the bulk of AECOM's 263 projects", sources:["AECOM IRP (263 projects, ~$977M)","AECOM WRP","Altadena IFP"],
+    subgroups:[ {label:"Electric",range:[0,2]},{label:"Water",range:[3,4]},{label:"Sewer & Storm Drain",range:[5,6]},{label:"Streets & Sidewalks",range:[7,8]},{label:"Streetlights, Telecom & Traffic",range:[9,11]},{label:"Coastal Highway",range:[12,12]} ],
+    items:[
+    { id:"b1", name:"Bury all power lines underground (53 miles)", lead:"LADWP Power", executor:"LADWP hires underground utility contractors (joint trenching with telecom)", currentFunding:"LADWP ratepayer funds; LADWP capital budget", drdRole:"Major gap funding — ratepayer capacity alone may be insufficient. Includes: Sunset Blvd backbone corridor (6.5 mi, $142M), neighborhood feeder lines in 8 zones ($420M), and full 34.5kV + 12kV distribution network. Co-funding could accelerate timeline from 10+ years to 3 years.", cost:"$650M+", costSource:"LADWP estimate (cited in AECOM WRP); AECOM IRP Table F.1", legal:["f1","f2"], lc:["build","recurring"], precedent:"Altadena IFP: utility undergrounding" },
+    { id:"b2", name:"Expand local power substation", lead:"LADWP Power", executor:"LADWP engineering + contractors", currentFunding:"LADWP capital budget", drdRole:"Gap funding if LADWP prioritizes other capital needs — substation DS-29 must grow to support underground network", cost:"$35M", costSource:"AECOM IRP Table F.1", legal:["f1","f2"], lc:["build","recurring"], precedent:"AECOM IRP Table F.1" },
+    { id:"b3", name:"Install smart meters for outage detection & fire shutoff", lead:"LADWP Power", executor:"LADWP + meter vendor", currentFunding:"LADWP modernization budget", drdRole:"Potential co-fund — enables remote outage detection and automatic fire-risk power shutoff", cost:"$36M", costSource:"AECOM IRP Table F.1", legal:["f2"], lc:["build","recurring"], precedent:"AECOM IRP Table F.1" },
+    { id:"b4", name:"Replace aging water pipes (19 projects)", lead:"LADWP Water", executor:"LADWP Water contracts pipeline firms", currentFunding:"LADWP Water capital budget; FEMA PA (partial)", drdRole:"Gap funding — accelerate from decades-long replacement cycle", cost:"$51M", costSource:"AECOM IRP Table F.1", legal:["f1"], lc:["build","recurring"], precedent:"AECOM IRP Table F.1" },
+    { id:"b5", name:"Upgrade reservoirs & fire hydrants", lead:"LADWP Water", executor:"LADWP Water engineering + contractors", currentFunding:"LADWP Water capital budget", drdRole:"Fund fire protection upgrades — better hydrant pressure, emergency backup tanks (Santa Ynez & Chautauqua reservoirs)", cost:null, costSource:"AECOM WRP identifies need but provides no cost", legal:["f1","f2"], lc:["build","recurring"], precedent:"AECOM WRP water system hardening" },
+    { id:"b6", name:"Connect homes from septic tanks to city sewer", lead:"LA Bureau of Sanitation", executor:"BoS contracts sewer construction firms", currentFunding:"Sewer rate revenue; Clean Water bond funds", drdRole:"Fund conversions — entirely new infrastructure, not rebuilding", cost:null, costSource:"No formal estimate", legal:["f2"], lc:["build","recurring"], precedent:"Altadena IFP: septic/cesspool conversion" },
+    { id:"b7", name:"Rebuild storm drains (post-fire mudslide risk)", lead:"LA Bureau of Engineering / BoS", executor:"City contracts civil engineering firms", currentFunding:"Measure W (Safe Clean Water); City capital", drdRole:"Co-fund — post-fire debris flow risk makes this urgent", cost:null, costSource:"No formal estimate", legal:["f1","f2"], lc:["build","recurring"], precedent:"Altadena IFP: water & storm drain realignment" },
+    { id:"b8", name:"Repave fire-damaged streets (~150 locations)", lead:"StreetsLA", executor:"StreetsLA contracts paving firms", currentFunding:"Measure R/M; FEMA PA (partial)", drdRole:"Gap funding — 57% of street projects lack cost estimates", cost:"$500K–$70M (range)", costSource:"AECOM IRP Table F.1", legal:["f1"], lc:["build","recurring"], precedent:null },
+    { id:"b9", name:"Rebuild sidewalks, curbs & driveways", lead:"StreetsLA / Bureau of Engineering", executor:"City contracts concrete/paving firms", currentFunding:"Measure M; City capital", drdRole:"Fund full reconstruction (not just patch repair)", cost:null, costSource:"No formal estimate", legal:["f1"], lc:["build","recurring"], precedent:null },
+    { id:"b10", name:"Bury streetlight wiring (with power line trenching)", lead:"Bureau of Street Lighting", executor:"BSL contracts electrical firms (coordinate with LADWP trenching)", currentFunding:"BSL assessment district revenue", drdRole:"Co-fund with LADWP joint trenching to capture cost savings", cost:null, costSource:"No formal estimate", legal:["f1","f2"], lc:["build","recurring"], precedent:"Altadena IFP: streetlight undergrounding" },
+    { id:"b11", name:"Bury internet/phone cables & add cell antennas to streetlights", lead:"Private carriers (AT&T, Spectrum, etc.)", executor:"Carriers hire contractors; LADWP provides joint trench access", currentFunding:"Carrier capital budgets (historically unwilling to underground)", drdRole:"Mandate joint-parallel trenching at cost; DRD could fund shared conduit", cost:null, costSource:"No formal estimate", legal:["f2"], lc:["build","recurring"], precedent:null },
+    { id:"b12", name:"Upgrade traffic signals & evacuation alerts", lead:"LADOT / LAFD", executor:"LADOT contracts ITS firms", currentFunding:"LADOT operating budget; Measure M", drdRole:"Fund evacuation-specific upgrades (fire-triggered signal preemption, dynamic routing)", cost:null, costSource:"No formal estimate", legal:["f2"], lc:["build","recurring"], precedent:"AECOM WRP evacuation chapter" },
+    { id:"b13", name:"PCH coastal road stabilization (with Caltrans)", lead:"Caltrans (State Highway); City/County partnership", executor:"Caltrans leads highway work; DRD co-funds revetment and local connector improvements", currentFunding:"Caltrans capital budget; FHWA Emergency Relief (partial)", drdRole:"Co-fund PCH revetment — oceanfront homes cannot rebuild without stabilized highway. TIF enables local match for State funding.", cost:null, costSource:"No formal estimate", legal:["f1","f2"], lc:["build","recurring"], precedent:"PCH links all 3 coastal communities; Caltrans participation could unlock recovery" },
+  ]},
+  { id:"C", icon:"🌲", group:"infra", title:"Wildfire Prevention", subtitle:"Harden the landscape against the next fire — slopes, vegetation, water systems, evacuation", sources:["AECOM WRP (129 pages)","SB 782 §62313(f)(2)"], items:[
+    { id:"c1", name:"Stabilize hillsides & coastal cliffs", lead:"No single lead — cross-jurisdictional", executor:"USACE (Army Corps); contracted by City or DRD", currentFunding:"FEMA HMGP (competitive, slow); no dedicated City fund", drdRole:"Primary funder — nobody else positioned to do this comprehensively", cost:null, costSource:"AECOM WRP identifies need, no cost analysis", legal:["f2"], lc:["build","recurring"], precedent:null },
+    { id:"c2", name:"Clean contaminated soil & monitor air/water quality", lead:"EPA (emergency phase); DTSC (long-term)", executor:"EPA completed Phase 1 hazmat. Long-term monitoring needs new contract.", currentFunding:"EPA Superfund (emergency only); no long-term monitoring fund", drdRole:"Fund long-term environmental monitoring (5–10 year program)", cost:null, costSource:"No formal estimate", legal:["f2"], lc:["recurring"], precedent:null },
+    { id:"c3", name:"Clear brush & create firebreaks around homes", lead:"CalFire / LAFD Brush Clearance Unit", executor:"CalFire sets standards; City enforces; DRD could fund district-wide implementation", currentFunding:"CalFire grants (competitive); homeowner responsibility (inconsistent)", drdRole:"Fund district-wide defensible space — systematic, not parcel-by-parcel", cost:null, costSource:"No formal estimate", legal:["f2"], lc:["recurring"], precedent:"AECOM WRP Chapter 3" },
+    { id:"c4", name:"Plant fire-resistant trees & landscaping", lead:"City Urban Forestry / RAP", executor:"Urban Forestry + contracted landscape firms", currentFunding:"Urban Forestry budget (minimal)", drdRole:"Fund community-scale fire-resistant replanting program", cost:null, costSource:"No formal estimate", legal:["f1","f2"], lc:["build","recurring"], precedent:"AECOM WRP fire-adapted landscaping recommendations" },
+    { id:"c5", name:"Build ocean water pump stations for firefighting", lead:"No current lead — conceptual proposal", executor:"Would require LAFD + Bureau of Engineering + coastal permitting", currentFunding:"None — new proposal", drdRole:"Full funding if community prioritizes — entirely new infrastructure", cost:"$100M+", costSource:"AECOM WRP (rough order-of-magnitude)", legal:["f2"], lc:["build","recurring"], precedent:"AECOM WRP: highest-cost resilience proposal" },
+    { id:"c6", name:"Upgrade emergency sirens & alert systems", lead:"LAFD / City Emergency Management Dept", executor:"EMD contracts alert system vendors", currentFunding:"EMD operating budget; FEMA grants", drdRole:"Fund next-gen alert infrastructure (sirens, cell broadcast, street signage)", cost:null, costSource:"No formal estimate", legal:["f2"], lc:["build","recurring"], precedent:null },
+  ]},
+  { id:"D", icon:"🏠", group:"people", title:"Homeowner Rebuilding", subtitle:"Help homeowners and property owners navigate and finance their rebuild", sources:["Altadena IFP","AECOM Logistics","SB 782 §62313(f)(3)(A)(D)"], items:[
+    { id:"d1", name:"Low-interest loans for homeowners to rebuild", lead:"DRD (new program)", executor:"DRD establishes loan/grant program; contracts servicer or partners with CDFI", currentFunding:"SBA disaster loans ($2M cap); private insurance (delayed/disputed)", drdRole:"Core DRD function — low-interest construction loans per SB 782 (f)(3)(D)", cost:null, costSource:"No formal estimate", legal:["f3"], lc:["recurring"], precedent:"Altadena IFP" },
+    { id:"d2", name:"Rebuild navigators — 1-on-1 case management for homeowners", lead:"DRD or City Housing Dept (new program)", executor:"DRD hires or contracts case managers; could partner with nonprofits", currentFunding:"Scattered nonprofit efforts (Pali Builds, Team Palisades); no systematic program", drdRole:"Fund systematic program — each homeowner gets a dedicated navigator", cost:"~$2–5M/yr", costSource:"Comparable program estimate", legal:["f3"], lc:["recurring"], precedent:"AECOM Logistics: LCSS concept" },
+    { id:"d3", name:"Low-interest construction loans for commercial properties", lead:"DRD (new program)", executor:"DRD establishes program; contracts with bank or CDFI", currentFunding:"SBA disaster loans ($7M cap); private lending", drdRole:"Core DRD function — capital access per SB 782 (f)(3)(E)", cost:null, costSource:"No formal estimate", legal:["f3"], lc:["recurring"], precedent:null },
+    { id:"d4", name:"Bulk-buy building materials to lower costs", lead:"No current lead", executor:"DRD could establish bulk purchasing program or materials staging area", currentFunding:"None — market-driven", drdRole:"Establish staging areas + bulk procurement to reduce per-unit costs", cost:null, costSource:"No formal estimate", legal:["f3"], lc:["build","recurring"], precedent:"AECOM Logistics: staging area planning." },
+  ]},
+  { id:"E", icon:"🏪", group:"people", title:"Local Business Recovery", subtitle:"Rebuild the commercial ecosystem — businesses, jobs, and the local economy", sources:["Altadena IFP","SB 782 §62313(f)(3)"], items:[
+    { id:"e1", name:"Commercial corridor rebuild (Palisades Village, Sunset Blvd)", lead:"City (EWDD) / Private property owners", executor:"Property owners rebuild; City rebuilds public realm", currentFunding:"Private insurance; SBA loans; City capital for public realm", drdRole:"Fund public realm + small business bridge loans to accelerate corridor reopening", cost:null, costSource:"No formal estimate", legal:["f1","f3"], lc:["build"], precedent:"Altadena IFP" },
+    { id:"e2", name:"Grants & loans for small businesses", lead:"DRD (new program)", executor:"DRD contracts with CDFI or establishes direct grant program", currentFunding:"SBA disaster loans (insufficient); LA EWDD programs (limited)", drdRole:"Direct grants or forgivable loans — per SB 782 (f)(3)(E)", cost:null, costSource:"No formal estimate", legal:["f3"], lc:["recurring"], precedent:"Altadena IFP includes small business capital access" },
+    { id:"e3", name:"Pop-up shops & temporary office space", lead:"No current lead", executor:"DRD or City partners with property owners for temporary retail/office", currentFunding:"None", drdRole:"Full funding — keep businesses operating during 3–5 year rebuild", cost:null, costSource:"No formal estimate", legal:["f3"], lc:["recurring"], precedent:"SB 782 (f)(3)(E)" },
+    { id:"e4", name:"Construction job training for local workers", lead:"City (EWDD) / LAUSD / community colleges", executor:"EWDD contracts training providers; could partner with trade unions", currentFunding:"WIOA funds; State workforce grants", drdRole:"Fund Palisades-specific construction training — meet labor demand for 7,000 rebuilds", cost:null, costSource:"No formal estimate", legal:["f3"], lc:["recurring"], precedent:"SB 782 (f)(3)(F)" },
+    { id:"e5", name:"Waive permit fees & speed up approvals", lead:"City (DBS / Planning)", executor:"City departments absorb costs; DRD reimburses City for lost fee revenue", currentFunding:"City waived some fees (Mayor Bass executive order); unsustainable long-term", drdRole:"Reimburse City for fee waivers to maintain expedited processing", cost:null, costSource:"No formal estimate", legal:["f3"], lc:["recurring"], precedent:"Standard post-disaster practice" },
+  ]},
+  { id:"F", icon:"👥", group:"people", title:"Displaced Resident Aid", subtitle:"Help displaced residents return and get back on their feet financially", sources:["SB 782 §62313(f)(3)(C)"], items:[
+    { id:"f1i", name:"Rent subsidies for displaced residents", lead:"No current systematic program", executor:"DRD establishes subsidy program; contracts housing agency", currentFunding:"FEMA IHP rental assistance (time-limited, 18 months); scattered nonprofit aid", drdRole:"Extend rental assistance beyond FEMA — rebuilds may take 3–5 years", cost:null, costSource:"No formal estimate", legal:["f3"], lc:["recurring"], precedent:"SB 782 (f)(3)(C): prevention of displacement." },
+    { id:"f2i", name:"Help with mortgage & insurance problems", lead:"Federal/State regulators (CFPB, CDI)", executor:"Regulatory — DRD role is advocacy + direct financial aid", currentFunding:"Federal forbearance programs (temporary); CDI enforcement", drdRole:"Fund direct assistance where federal programs expire", cost:null, costSource:"No formal estimate", legal:["f3"], lc:["recurring"], precedent:null },
+    { id:"f3i", name:"Free legal help (insurance fights, FEMA claims, fraud)", lead:"No current systematic program", executor:"DRD contracts legal aid organizations or pro bono referral program", currentFunding:"FEMA legal services (very limited); Legal Aid Foundation of LA (capacity-constrained)", drdRole:"Fund dedicated legal aid — insurance dispute resolution is critical", cost:"~$1–3M/yr", costSource:"Comparable program estimate", legal:["f3"], lc:["recurring"], precedent:null },
+    { id:"f4i", name:"Tax relief & free tax preparation help", lead:"Federal/State (IRS, FTB)", executor:"Legislative — DRD cannot directly provide tax relief", currentFunding:"R&T Code §170 (disaster property tax reassessment); some federal exclusions", drdRole:"Limited direct role — advocacy + tax preparation assistance", cost:"Minimal cost", costSource:null, legal:["f3"], lc:["recurring"], precedent:null },
+  ]},
+  { id:"G", icon:"🚧", group:"ops", title:"Construction Logistics", subtitle:"Manage the logistics of 7,000 simultaneous rebuilds on narrow hillside roads", sources:["AECOM Logistics & Traffic Management Plan","AECOM IRP Tier framework"], items:[
+    { id:"g1", name:"Coordinate which projects get built first", lead:"City (multi-department)", executor:"City convenes SIG with LADWP, StreetsLA, BoS, BoE — sequences major infrastructure", currentFunding:"City staff time (unfunded mandate); AECOM contract (time-limited)", drdRole:"Fund permanent SIG operations for full rebuild period (5–10 years)", cost:"~$3–5M/yr", costSource:"Inferred from AECOM Logistics", legal:["f1","f3"], lc:["recurring"], precedent:"AECOM Logistics Report" },
+    { id:"g2", name:"Manage truck routes, deliveries & construction traffic", lead:"City (new system)", executor:"City/DRD establishes logistics command — truck routing, delivery windows, staging, shuttles", currentFunding:"None — proposed but unfunded", drdRole:"Full funding — without this, construction gridlock will delay all rebuilds", cost:"~$5–15M/yr", costSource:"Inferred from AECOM Logistics", legal:["f3"], lc:["recurring"], precedent:"AECOM Logistics Report" },
+    { id:"g3", name:"Help homeowners coordinate their rebuild", lead:"City/DRD (new program)", executor:"DRD hires staff to help homeowners coordinate contractors, utilities, permits", currentFunding:"None — proposed but unfunded", drdRole:"Full funding — individual homeowner-facing side of coordination", cost:"~$2–5M/yr", costSource:"Inferred from AECOM Logistics", legal:["f3"], lc:["recurring"], precedent:"AECOM Logistics Report" },
+    { id:"g4", name:"Set up staging areas & truck routes", lead:"City (Bureau of Engineering / LADOT)", executor:"City identifies and establishes staging areas; manages haul route permits", currentFunding:"City operating budget (limited)", drdRole:"Fund land lease/acquisition for staging + traffic management", cost:"$10–30M to establish", costSource:"AECOM Logistics (order-of-magnitude)", legal:["f1","f3"], lc:["build","recurring"], precedent:"AECOM Logistics Report" },
+  ]},
+  { id:"H", icon:"❤️", group:"ops", title:"Health & Community Services", subtitle:"Address the human toll — trauma, environmental health, and community wellbeing", sources:["SAMHSA Crisis Counseling Program"], items:[
+    { id:"h1", name:"Mental health & trauma counseling (adults, children, seniors)", lead:"LA County Dept of Mental Health (DMH)", executor:"DMH + contracted community mental health providers", currentFunding:"FEMA Crisis Counseling (9 months + possible 90-day extension); DMH operating budget", drdRole:"Fund extended program beyond FEMA — disaster trauma persists for years", cost:"~$3–10M/yr", costSource:"Comparable program estimate (SAMHSA range)", legal:["f3"], lc:["recurring"], precedent:null },
+    { id:"h2", name:"Monitor air, soil & water quality long-term", lead:"EPA / DTSC / AQMD", executor:"Agencies conduct monitoring; DRD funds expanded community-level testing", currentFunding:"EPA emergency authority (ends); AQMD routine monitoring (not fire-specific)", drdRole:"Fund 5–10 year community health monitoring program", cost:"~$1–3M/yr", costSource:"Comparable program estimate", legal:["f2"], lc:["recurring"], precedent:null },
+    { id:"h3", name:"Childcare & after-school programs during rebuild", lead:"No current lead for fire-specific programs", executor:"DRD contracts childcare providers or funds expanded LAUSD programs", currentFunding:"Scattered; Head Start; LAUSD after-school (not fire-specific)", drdRole:"Fund temporary expanded childcare — parents need time to manage rebuilds", cost:null, costSource:"No formal estimate", legal:["f3"], lc:["recurring"], precedent:null },
+    { id:"h4", name:"Community healing & resilience programs", lead:"No current lead", executor:"DRD funds community organizations (support groups, events, arts)", currentFunding:"Nonprofit donations (unpredictable)", drdRole:"Provide stable multi-year funding for community cohesion", cost:"~$500K–2M/yr", costSource:"Comparable program estimate", legal:["f3"], lc:["recurring"], precedent:null },
+  ]},
+  { id:"I", icon:"⚖️", group:"ops", title:"District Governance", subtitle:"Run the district itself — administration, transparency, and community participation", sources:["SB 782 formation requirements","Altadena IFP governance structure"], items:[
+    { id:"i1", name:"Run the district (staff, budget, operations)", lead:"City of LA (initiates); PFA (operates)", executor:"PFA hires executive director + staff; contracts fiscal agent, bond counsel", currentFunding:"None until DRD formed — startup costs need seed funding", drdRole:"Self-funding from tax increment (typically 3–5% of revenue)", cost:"~$2–5M/yr", costSource:"Comparable TIF district admin estimate", legal:["f1","f2","f3"], lc:["recurring"], precedent:"Altadena IFP: PFA administration built into operating budget" },
+    { id:"i2", name:"Annual audits & public spending dashboard", lead:"PFA / City Controller", executor:"PFA contracts independent auditor; publishes annual reports + public dashboard", currentFunding:"Built into DRD operating costs", drdRole:"Mandatory — annual audit, public dashboard, expenditure tracking", cost:"Included in admin", costSource:"N/A", legal:["f1","f2","f3"], lc:["recurring"], precedent:"Required by SB 782 formation process" },
+    { id:"i3", name:"Community input meetings & surveys", lead:"PFA + City", executor:"PFA funds community input processes (assemblies, surveys, hearings)", currentFunding:"None pre-formation; SB 782 requires public hearing for IFP adoption", drdRole:"Fund ongoing engagement — not just formation hearings but sustained participation", cost:"~$500K–1M/yr", costSource:"Comparable program estimate", legal:["f1","f2","f3"], lc:["recurring"], precedent:null },
+    { id:"i4", name:"Community advisory board", lead:"PFA appoints; community nominates", executor:"Governance body advises PFA on project priorities and spending", currentFunding:"None — must be established", drdRole:"Fund community governance structure — key to legitimacy", cost:"Included in admin", costSource:"N/A", legal:["f1","f2","f3"], lc:["recurring"], precedent:null },
+  ]},
+];
+
+const GLOSSARY_DATA = {
+  "FEMA PA":"FEMA Public Assistance — federal grants for infrastructure repair",
+  "FEMA IHP":"FEMA Individuals & Households Program — personal assistance grants",
+  "FEMA":"Federal Emergency Management Agency",
+  "HMGP":"Hazard Mitigation Grant Program — FEMA competitive grants for risk reduction",
+  "LADWP":"Los Angeles Department of Water and Power",
+  "SBA":"Small Business Administration",
+  "CDFI":"Community Development Financial Institution",
+  "EWDD":"Economic & Workforce Development Department (City of LA)",
+  "RAP":"Department of Recreation and Parks (City of LA)",
+  "BoS":"Bureau of Sanitation (City of LA)",
+  "BoE":"Bureau of Engineering (City of LA)",
+  "BSL":"Bureau of Street Lighting (City of LA)",
+  "LADOT":"Los Angeles Department of Transportation",
+  "AQMD":"South Coast Air Quality Management District",
+  "DTSC":"Department of Toxic Substances Control (California)",
+  "DMH":"Department of Mental Health (LA County)",
+  "EMD":"Emergency Management Department (City of LA)",
+  "PFA":"Public Financing Authority — the body that operates a DRD",
+  "USACE":"US Army Corps of Engineers",
+  "WIOA":"Workforce Innovation & Opportunity Act — federal job training funding",
+  "ITS":"Intelligent Transportation Systems",
+  "AMI":"Advanced Metering Infrastructure (smart meters)",
+  "SIG":"Strategic Investment Group — coordinates major infrastructure sequencing",
+  "PALMS":"Palisades Area Logistics Management System",
+  "LCSS":"Local Construction Support Service — homeowner-facing rebuild assistance",
+  "Measure A":"LA County Parks & Open Space tax (2024) — funds park improvements and open space",
+  "Measure R":"LA County sales tax (2008) — 0.5% for transit and transportation projects",
+  "Measure M":"LA County sales tax (2016) — additional 0.5% for road repair and transit expansion",
+  "Measure W":"Safe Clean Water tax (2018) — stormwater management and water quality improvement",
+  "Prop K":"City of LA parks bond (2006) — $143.65M over 30 years, expiring FY 2026-27",
+  "DRD":"Disaster Recovery District — created under SB 782",
+  "TIF":"Tax Increment Financing — how a DRD generates revenue",
+  "IFP":"Infrastructure Financing Plan — required plan for DRD spending",
+  "AECOM":"Infrastructure consulting firm contracted by City of LA",
+  "IRP":"Infrastructure Restoration Plan (AECOM Task 42A)",
+  "WRP":"Wildfire Resilience Plan (AECOM Task 42B)",
+  "SAMHSA":"Substance Abuse and Mental Health Services Administration",
+  "HUD":"US Department of Housing and Urban Development",
+  "EPA":"Environmental Protection Agency",
+  "CDI":"California Department of Insurance",
+  "CFPB":"Consumer Financial Protection Bureau",
+  "LAFD":"Los Angeles Fire Department",
+  "LSC":"Legal Services Corporation — federally funded legal aid",
+  "LAUSD":"Los Angeles Unified School District",
+  "CalFire":"California Department of Forestry and Fire Protection",
+  "Caltrans":"California Department of Transportation — owns and maintains state highways including PCH",
+  "PCH":"Pacific Coast Highway (State Route 1) — state highway linking Palisades, Malibu, and Santa Monica Mountains",
+  "FHWA":"Federal Highway Administration — provides Emergency Relief funds for highway repair",
+  "ULI":"Urban Land Institute — real estate research and land use organization",
+  "DBS":"Department of Building and Safety (City of LA)",
+  "RPOSD":"Regional Park and Open Space District (LA County)",
+  "FTB":"Franchise Tax Board — California's state tax collection agency",
+};
+const G_KEYS = Object.keys(GLOSSARY_DATA).sort((a,b) => b.length - a.length);
+const G_RE = new RegExp(`\\b(${G_KEYS.map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join("|")})\\b`,"g");
+
+function linkGlossary(text) {
+  if (!text) return '';
+  const esc = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return esc.replace(G_RE, m => {
+    const d = GLOSSARY_DATA[m];
+    return d ? `<span class="g-term">${m}<span class="g-bubble"><strong>${m}</strong>: ${d}</span></span>` : m;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PAGES: intro + 9 categories + glossary + sources
+// ═══════════════════════════════════════════════════════════════════════════════
+const PAGES = [
+  { id:"intro", label:"Introduction", icon:"📋" },
+  ...CATEGORIES.map(c => ({ id:c.id, label:CAT_SHORT[c.id], icon:c.icon, cat:c })),
+  { id:"glossary", label:"Glossary", icon:"📖" },
+  { id:"sources", label:"Sources", icon:"📄" },
+];
+
+let currentPage = 0;
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SIDEBAR
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderSidebar() {
+  const sb = document.getElementById('sidebar');
+  let html = '';
+
+  // Intro
+  html += sideBtn(0, "📋", "", "Introduction");
+  // Groups
+  for (const [gid, g] of Object.entries(GROUPS)) {
+    html += `<div class="side-group-label" style="color:${g.color}">${g.label}</div>`;
+    PAGES.forEach((p, i) => {
+      if (p.cat && p.cat.group === gid) {
+        html += sideBtn(i, p.icon, p.id, p.label, g.color, p.cat.items.length);
+      }
+    });
+  }
+  // Glossary + Sources
+  html += `<div class="side-group-label">Reference</div>`;
+  html += sideBtn(PAGES.length - 2, "📖", "", "Glossary");
+  html += sideBtn(PAGES.length - 1, "📄", "", "Sources");
+
+  // Legend
+  html += `<div class="side-legend">
+    <div class="side-legend-title">Lifecycle Tags</div>
+    <div class="side-legend-row"><span class="side-legend-dot" style="background:var(--tag-build)"></span> Build — one-time capital</div>
+    <div class="side-legend-row"><span class="side-legend-dot" style="background:var(--tag-ongoing)"></span> Recurring — continues after initial build</div>
+    <div class="side-legend-title" style="margin-top:10px">Legal Basis</div>
+    <div class="side-legend-row"><span class="legal-tag legal-f1" style="font-size:0.6rem">(f)(1)</span> Repair & replace</div>
+    <div class="side-legend-row"><span class="legal-tag legal-f2" style="font-size:0.6rem">(f)(2)</span> Mitigate risk</div>
+    <div class="side-legend-row"><span class="legal-tag legal-f3" style="font-size:0.6rem">(f)(3)</span> Economic recovery</div>
+  </div>`;
+
+  sb.innerHTML = html;
+  updateSidebarActive();
+}
+
+function sideBtn(idx, icon, id, label, color, count) {
+  return `<button class="side-item" data-idx="${idx}" onclick="goToPage(${idx})" style="${color ? 'border-left-color:'+color : ''}">
+    <span class="s-icon">${icon}</span>
+    ${id ? `<span class="s-id" style="color:${color||'var(--muted)'}">${id}</span>` : ''}
+    <span class="s-label">${label}</span>
+    ${count ? `<span class="s-count">${count}</span>` : ''}
+  </button>`;
+}
+
+function updateSidebarActive() {
+  document.querySelectorAll('.side-item').forEach(el => {
+    el.classList.toggle('active', parseInt(el.dataset.idx) === currentPage);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROGRESS BAR
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderProgress() {
+  const bar = document.getElementById('progressBar');
+  const label = document.getElementById('progressLabel');
+  const total = PAGES.length;
+  label.textContent = `${currentPage + 1} / ${total} — ${PAGES[currentPage].label}`;
+
+  bar.innerHTML = PAGES.map((p, i) => {
+    const w = 100 / total;
+    let color = 'var(--border)';
+    if (i === currentPage) color = p.cat ? GROUPS[p.cat.group].color : '#e8c94a';
+    else if (i < currentPage) color = p.cat ? GROUPS[p.cat.group].color + '60' : '#e8c94a60';
+    return `<div class="progress-seg" onclick="goToPage(${i})" title="${p.label}" style="width:${w}%;background:${color};${i>0?'margin-left:1px':''}"></div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RENDER HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+function lcTagHTML(tags) {
+  const map = { build:{cls:"lc-build",label:"🔨 Build"}, recurring:{cls:"lc-ongoing",label:"🔄 Recurring"} };
+  return '<div class="lifecycle-tags">' + tags.map(t=>map[t]?`<span class="lc-tag ${map[t].cls}">${map[t].label}</span>`:'').join('') + '</div>';
+}
+function legalTagsHTML(ids) {
+  const c={f1:"legal-f1",f2:"legal-f2",f3:"legal-f3"}, l={f1:"(f)(1) Repair",f2:"(f)(2) Mitigate",f3:"(f)(3) Recovery"}, d={f1:"Repair, restore, replace",f2:"Mitigate future risk",f3:"Economic recovery"};
+  return ids.map(id=>`<span class="legal-tag ${c[id]}" title="${d[id]}">${l[id]}</span>`).join('');
+}
+function costHTML(cost, src) {
+  if (!cost && (!src || src==="No formal estimate")) return '<span class="item-no-est">No estimate available</span>';
+  let h='';
+  if (cost) h+=`<span class="item-cost-val">${cost}</span>`;
+  if (src && src!=="N/A") h+=`<span class="item-cost-src">${cost?"— ":""}${src}</span>`;
+  return h;
+}
+function detailRow(label, value, opts={}) {
+  if (!value) return '';
+  const color = opts.color||'var(--muted)';
+  const hl = opts.highlight ? `style="font-weight:600;padding:6px 8px;border-radius:4px;border-left:2px solid ${color};background:${color}08"` : '';
+  return `<div><div class="detail-label" style="color:${opts.highlight?color:'var(--muted)'}">${label}</div><div class="detail-value ${opts.muted?'detail-muted':''}" ${hl}>${linkGlossary(value)}</div></div>`;
+}
+function renderItem(item, groupColor) {
+  return `<div class="item-card" id="item-${item.id}">
+    <div class="item-header">
+      <div class="item-name">${linkGlossary(item.name)}</div>
+      <div class="item-meta">${legalTagsHTML(item.legal)} <span style="margin-left:4px">${costHTML(item.cost,item.costSource)}</span></div>
+      ${lcTagHTML(item.lc)}
+    </div>
+    <div class="item-detail" style="border-top:none;padding-top:8px"><div class="detail-grid">
+      ${detailRow("Lead agency",item.lead)}
+      ${detailRow("Who does the work",item.executor)}
+      ${detailRow("Current funding",item.currentFunding)}
+      ${detailRow("DRD role",item.drdRole,{highlight:true,color:groupColor})}
+      ${detailRow("Precedent / source",item.precedent,{muted:true})}
+    </div></div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PAGE CONTENT
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderPage() {
+  const main = document.getElementById('mainContent');
+  const page = PAGES[currentPage];
+  let html = '';
+
+  if (page.id === 'intro') {
+    html = renderIntro();
+  } else if (page.id === 'glossary') {
+    html = renderGlossaryPage();
+  } else if (page.id === 'sources') {
+    html = renderSourcesPage();
+  } else {
+    html = renderCategoryPage(page.cat);
+  }
+
+  // Nav buttons
+  html += `<div class="nav-btns">
+    <button class="nav-btn" onclick="goToPage(${currentPage-1})" ${currentPage===0?'disabled':''}>← Previous</button>
+    <span class="nav-page-info">${currentPage+1} of ${PAGES.length}</span>
+    <button class="nav-btn primary" onclick="goToPage(${currentPage+1})" ${currentPage===PAGES.length-1?'disabled':''}>Next →</button>
+  </div>`;
+
+  main.innerHTML = html;
+  renderProgress();
+  updateSidebarActive();
+}
+
+function renderIntro() {
+  return `<div class="intro-section">
+    <h2>What Could a DRD Fund?</h2>
+    <p>This tool presents ${CATEGORIES.reduce((s,c)=>s+c.items.length,0)} recovery activities across ${CATEGORIES.length} categories that could potentially be funded through a Disaster Recovery District (DRD) under SB 782.</p>
+    <p>Each item includes its lead agency, current funding status, and the role a DRD could play. Items are tagged by <strong>cost lifecycle</strong> — whether they require one-time capital (<span style="color:var(--tag-build);font-weight:600">Build</span>) or continue after initial construction (<span style="color:var(--tag-ongoing);font-weight:600">Recurring</span>).</p>
+    <p>Use the sidebar to navigate between categories, or click <strong>Next</strong> to go through them one by one.</p>
+
+    <div style="margin-top:20px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px">
+      <div style="font-weight:700;font-size:0.82rem;margin-bottom:10px">Cost Lifecycle Tags</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px">
+        <span style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:0.85rem;color:var(--tag-build)"><span style="width:10px;height:10px;border-radius:50%;background:var(--tag-build);display:inline-block"></span> Build — one-time capital</span>
+        <span style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:0.85rem;color:var(--tag-ongoing)"><span style="width:10px;height:10px;border-radius:50%;background:var(--tag-ongoing);display:inline-block"></span> Recurring — continues after initial build</span>
+      </div>
+      <p style="font-size:0.78rem;color:var(--muted);line-height:1.45;margin:0"><strong>Build</strong> = one-time capital expenditure. <strong>Recurring</strong> = continues after initial construction (maintenance, staffing, programs). Many items carry both tags.</p>
+    </div>
+
+    <div class="legal-legend" style="margin-top:16px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px">
+      <div style="font-weight:700;font-size:0.82rem;margin-bottom:10px"><a href="https://leginfo.legislature.ca.gov/faces/billNavClient.xhtml?bill_id=202520260SB782" target="_blank" style="color:inherit;text-decoration:underline">SB 782</a> Legal Basis — Gov. Code §62313(f)</div>
+      <div class="legal-legend-row"><span class="legal-tag legal-f1">(f)(1)</span> Repair, restore, replace damaged structures & infrastructure</div>
+      <div class="legal-legend-row"><span class="legal-tag legal-f2">(f)(2)</span> Mitigate risk of future disaster</div>
+      <div class="legal-legend-row"><span class="legal-tag legal-f3">(f)(3)</span> Support economic recovery from disaster</div>
+      <p style="font-size:0.75rem;color:var(--muted);margin-top:8px;padding:7px 10px;background:var(--surface2);border-radius:4px;line-height:1.45">A project need only satisfy one subsection. SB 782 has no case law; eligibility is determined locally and subject to judicial review.</p>
+    </div>
+
+    <div style="margin-top:16px;padding:14px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;display:flex;align-items:flex-start;gap:10px">
+      <span style="font-size:1.1rem">💰</span>
+      <div>
+        <div style="font-weight:700;font-size:0.82rem;margin-bottom:4px">Not a New Tax</div>
+        <p style="font-size:0.78rem;color:var(--text-body);line-height:1.45;margin:0">A DRD is funded through Tax Increment Financing (TIF) — it captures the <em>future growth</em> in property tax revenue that comes from rebuilding and new investment. As properties are rebuilt and their assessed values rise, the increase (the "increment") goes to the DRD to fund recovery projects. It does not raise tax rates or create any new tax on residents.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;padding:14px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;display:flex;align-items:flex-start;gap:10px">
+      <span style="font-size:1.1rem">🏫</span>
+      <div>
+        <div style="font-weight:700;font-size:0.82rem;margin-bottom:4px">School Funding Is Protected</div>
+        <p style="font-size:0.78rem;color:var(--text-body);line-height:1.45;margin:0">Under California law, a DRD does not divert property tax increment from school entities, including school districts and community college districts. As a result, K–14 education revenues are generally protected from DRD tax-increment financing.</p>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderCategoryPage(cat) {
+  const gc = GROUPS[cat.group].color;
+  let html = `<div class="cat-header">
+    <div class="cat-header-row">
+      <span class="icon">${cat.icon}</span>
+      <span class="cid" style="color:${gc}">${cat.id}</span>
+      <span class="ctitle">${cat.title}</span>
+    </div>
+    <div class="csub">${linkGlossary(cat.subtitle)}</div>
+    <div class="cat-sources">${cat.sources.map(s=>`<span class="cat-source">${s}</span>`).join('')}</div>
+  </div>`;
+
+  const search = (document.getElementById('searchBox')?.value||'').toLowerCase();
+  let items = cat.items;
+  if (search) items = items.filter(it => (it.name+' '+it.lead+' '+it.executor+' '+it.drdRole+' '+(it.precedent||'')).toLowerCase().includes(search));
+
+  if (cat.subgroups) {
+    cat.subgroups.forEach(sg => {
+      const sub = cat.items.slice(sg.range[0],sg.range[1]+1).filter(it=>items.includes(it));
+      if (sub.length === 0) return;
+      html += `<div class="subgroup-label">${sg.label}</div>`;
+      sub.forEach(it => { html += renderItem(it, gc); });
+    });
+  } else {
+    items.forEach(it => { html += renderItem(it, gc); });
+  }
+
+  if (items.length === 0) html += `<p style="color:var(--faint);font-style:italic;margin-top:12px">No items match your search.</p>`;
+
+  return html;
+}
+
+function renderGlossaryPage() {
+  const keys = G_KEYS.slice().sort((a,b)=>a.localeCompare(b));
+  return `<div class="intro-section">
+    <h2>Glossary of Abbreviations</h2>
+    <p>Hover over dotted-underlined terms anywhere in the tool to see their definition.</p>
+    <div class="glossary-grid" style="margin-top:16px">
+      ${keys.map(t=>`<div class="glossary-row"><span class="glossary-term">${t}</span><span class="glossary-def">${GLOSSARY_DATA[t]}</span></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function renderSourcesPage() {
+  return `<div class="footer-section">
+    <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:12px">Sources</h2>
+    <div>AECOM Infrastructure Restoration Plan (Task 42A) — 263 projects, ~$977M Class O estimate</div>
+    <div>AECOM Wildfire Resilience Plan (Task 42B) — 129 pages, 1 cost table</div>
+    <div>AECOM Logistics & Traffic Management Plan (Task 42C) — SIG, PALMS, LCSS frameworks</div>
+    <div><a href="https://leginfo.legislature.ca.gov/faces/billNavClient.xhtml?bill_id=202520260SB782" target="_blank" style="color:var(--blue)">SB 782 (2025)</a> Gov. Code §62313(f) — DRD eligible spending statute</div>
+    <div>Altadena AWRIFD Draft IFP (Dec 17, 2025) — first DRD implementation, ~$2B project list</div>
+    <div class="footer-note">This is a reference tool for community deliberation. It does not represent a budget, recommendation, or commitment. Legal basis tags reflect statutory text and should not be construed as legal advice.</div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INTERACTIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+function goToPage(idx) {
+  if (idx < 0 || idx >= PAGES.length) return;
+  currentPage = idx;
+  closeSidebar();
+  renderPage();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function onSearch() { renderPage(); }
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const tab = document.getElementById('sideTab');
+  const isOpening = !sb.classList.contains('open');
+  sb.classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('vis');
+  if (tab) {
+    if (isOpening) {
+      tab.style.opacity = '0';
+      setTimeout(() => { tab.textContent = '◀'; tab.style.left = '240px'; tab.style.opacity = ''; }, 260);
+    } else {
+      tab.style.opacity = '0';
+      tab.textContent = '▶'; tab.style.left = '0';
+      setTimeout(() => { tab.style.opacity = ''; }, 50);
+    }
+  }
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('vis');
+  const tab = document.getElementById('sideTab');
+  if (tab) { tab.textContent = '▶'; tab.style.left = '0'; tab.style.opacity = ''; }
+}
+
+// Keyboard nav
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); goToPage(currentPage+1); }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); goToPage(currentPage-1); }
+});
+
+// Tooltip positioning (fixed)
+document.addEventListener('mouseover', e => {
+  const term = e.target.closest('.g-term');
+  if (!term) return;
+  const bubble = term.querySelector('.g-bubble');
+  if (!bubble) return;
+  const r = term.getBoundingClientRect();
+  let left = r.left + r.width / 2 - 160;
+  left = Math.max(8, Math.min(left, window.innerWidth - 328));
+  bubble.style.left = left + 'px';
+  bubble.style.top = (r.top - 8) + 'px';
+  bubble.style.transform = 'translateY(-100%)';
+});
+
+// Sync sidebar & main top with actual top-bar height
+function syncTopOffset() {
+  const bar = document.querySelector('.top-bar');
+  if (!bar) return;
+  const h = bar.offsetHeight;
+  document.querySelector('.sidebar').style.top = h + 'px';
+  document.querySelector('.main').style.marginTop = h + 'px';
+}
+window.addEventListener('resize', syncTopOffset);
+
+// Init
+renderSidebar();
+renderPage();
+syncTopOffset();
+</script>
+</body>
+</html>
